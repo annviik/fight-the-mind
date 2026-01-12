@@ -8,8 +8,79 @@ import { z } from 'zod';
 const app = express();
 const db = new Database('database.sqlite');
 
-// JWT Secret - In production, use environment variable
-const JWT_SECRET = 'fight-the-mind-secret-key-change-in-production';
+// JWT Secret - Use environment variable in production
+const JWT_SECRET = process.env.JWT_SECRET || 'fight-the-mind-secret-key-change-in-production';
+
+// Auto-seed database if empty
+const seedIfEmpty = async () => {
+  const storyCount = db.prepare('SELECT COUNT(*) as count FROM stories').get();
+  if (storyCount.count === 0) {
+    console.log('📦 Database empty, seeding initial data...');
+    
+    // Add sample stories
+    const stories = [
+      {
+        title: 'Finding Light in the Darkness: My Journey with Depression',
+        content: 'After years of struggling in silence, I finally found the courage to seek help. Depression had become my constant companion, but therapy and support changed everything. Recovery isn\'t linear, but hope is real.',
+        excerpt: 'After years of struggling in silence, I finally found the courage to seek help...',
+        authorName: 'Anonymous',
+        category: 'Depression',
+        likes: 245
+      },
+      {
+        title: 'Anxiety Doesn\'t Define Me Anymore',
+        content: 'Living with anxiety felt like being trapped in a storm. But with therapy, medication, and support, I found my calm. The panic attacks still come sometimes, but I have tools now. You can find peace too.',
+        excerpt: 'Living with anxiety felt like being trapped in a storm. But with therapy...',
+        authorName: 'Sarah M.',
+        category: 'Anxiety',
+        likes: 189
+      },
+      {
+        title: 'The Power of Community in Mental Health Recovery',
+        content: 'I never knew how much connection could heal until I found others who understood. Joining a support group changed my life. We are not meant to heal alone.',
+        excerpt: 'I never knew how much connection could heal until I found others who understood...',
+        authorName: 'James T.',
+        category: 'Recovery',
+        likes: 312
+      },
+      {
+        title: 'Breaking the Stigma: A Father\'s Perspective',
+        content: 'As a man, I was taught to be strong and never show weakness. But mental health doesn\'t discriminate. Asking for help is the bravest thing I ever did.',
+        excerpt: 'As a man, I was taught to be strong and never show weakness...',
+        authorName: 'Michael R.',
+        category: 'Personal Growth',
+        likes: 423
+      }
+    ];
+    
+    const insertStory = db.prepare(
+      'INSERT INTO stories (title, content, excerpt, author_name, category, likes) VALUES (?, ?, ?, ?, ?, ?)'
+    );
+    
+    for (const s of stories) {
+      insertStory.run(s.title, s.content, s.excerpt, s.authorName, s.category, s.likes);
+    }
+    
+    // Add sample therapists
+    const therapists = [
+      { firstName: 'Emily', lastName: 'Chen', email: 'emily.chen@therapy.com', phone: '+1 (555) 123-4567', licenseType: 'Licensed Clinical Psychologist', licenseNumber: 'PSY12345', specialties: 'Anxiety, Depression, Trauma', bio: 'Dr. Chen has over 15 years of experience helping individuals overcome anxiety and depression.', photoUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face', city: 'New York', state: 'NY', zip: '10001', rating: 4.9, reviewsCount: 127, verified: 1 },
+      { firstName: 'Marcus', lastName: 'Williams', email: 'marcus.williams@therapy.com', phone: '+1 (555) 234-5678', licenseType: 'Licensed Marriage & Family Therapist', licenseNumber: 'MFT67890', specialties: 'Relationships, Family Therapy, Grief', bio: 'Dr. Williams specializes in helping couples and families navigate difficult transitions.', photoUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop&crop=face', city: 'New York', state: 'NY', zip: '10002', rating: 4.8, reviewsCount: 94, verified: 1 },
+      { firstName: 'Sarah', lastName: 'Johnson', email: 'sarah.johnson@therapy.com', phone: '+1 (555) 345-6789', licenseType: 'Licensed Clinical Social Worker', licenseNumber: 'LCSW11111', specialties: 'Anxiety, PTSD, Life Transitions', bio: 'Sarah brings a compassionate, trauma-informed approach to therapy.', photoUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop&crop=face', city: 'Brooklyn', state: 'NY', zip: '11201', rating: 4.7, reviewsCount: 82, verified: 1 }
+    ];
+    
+    const insertTherapist = db.prepare(
+      'INSERT INTO therapists (first_name, last_name, email, phone, license_type, license_number, specialties, bio, photo_url, city, state, zip, rating, reviews_count, verified, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
+    );
+    
+    for (const t of therapists) {
+      insertTherapist.run(t.firstName, t.lastName, t.email, t.phone, t.licenseType, t.licenseNumber, t.specialties, t.bio, t.photoUrl, t.city, t.state, t.zip, t.rating, t.reviewsCount, t.verified);
+    }
+    
+    console.log('✅ Database seeded with sample data');
+  }
+};
+
+seedIfEmpty();
 
 // Middleware
 app.use(cors({
