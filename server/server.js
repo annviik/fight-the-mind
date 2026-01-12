@@ -80,8 +80,6 @@ const seedIfEmpty = async () => {
   }
 };
 
-seedIfEmpty();
-
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
@@ -183,6 +181,9 @@ db.exec(`
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
 `);
+
+// Seed database if empty (after tables are created)
+seedIfEmpty();
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
