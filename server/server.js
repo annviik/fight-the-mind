@@ -6,7 +6,16 @@ import Database from 'better-sqlite3';
 import { z } from 'zod';
 
 const app = express();
-const db = new Database('database.sqlite');
+
+// Database setup with error handling
+let db;
+try {
+  db = new Database('database.sqlite');
+  console.log('✅ Database connected');
+} catch (error) {
+  console.error('❌ Database connection failed:', error.message);
+  process.exit(1);
+}
 
 // JWT Secret - Use environment variable in production
 const JWT_SECRET = process.env.JWT_SECRET || 'fight-the-mind-secret-key-change-in-production';
@@ -183,7 +192,11 @@ db.exec(`
 `);
 
 // Seed database if empty (after tables are created)
-seedIfEmpty();
+try {
+  seedIfEmpty();
+} catch (error) {
+  console.error('⚠️ Seeding failed (continuing anyway):', error.message);
+}
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
@@ -873,7 +886,9 @@ app.get('/api/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+const HOST = '0.0.0.0';
+
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running on http://${HOST}:${PORT}`);
 });
 
