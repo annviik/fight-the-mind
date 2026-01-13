@@ -888,7 +888,20 @@ app.get('/api/health', (req, res) => {
 const PORT = process.env.PORT || 3001;
 const HOST = '0.0.0.0';
 
-app.listen(PORT, HOST, () => {
+// Handle uncaught errors to prevent crashes
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+const server = app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on http://${HOST}:${PORT}`);
 });
+
+// Keep the server alive
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120000;
 
